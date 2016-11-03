@@ -1,5 +1,5 @@
 clear ; close all; clc
-% load('ex6data1.mat');
+%load('ex6data1.mat');
 % plotData(X, y);
 % fprintf('Program paused. Press enter to continue.\n');
 % pause;
