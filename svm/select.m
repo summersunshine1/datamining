@@ -1,10 +1,6 @@
 function [alphas,b]=select(alphas,c,k,y,b,E,tol)
 m=size(y,1);
-r=find(alphas>0&&alphas<c);%no bundary variant
-if(size(r,2)==0)%if no 0<alphas<c,go over training example,and find examples against kkt
-    r=[1:1:m];
-end
-r1=find(alphas==0||alphas==c);%boundary variant
+[r r1]=GetSet(alphas,c);
 n=length(r);
 n1=length(r1);
 choosefirst=1;
@@ -12,83 +8,107 @@ choosefirst1=1;
 for i=1:m
     E(i) = b + sum (alphas.*y.*k(:,i)) - y(i);
 end
+fprintf("no boundary %d and boundary %d\n",n,n1);
 times=0;
+%intial index
+randindex1=randperm(n);%select variant randomly
+randindex2=randperm(n1); 
 while true 
     times++;
-    if(times>20)
-        break;
-    end
+    % if(times>2000)
+        % break;
+    % end
     fprintf("cycle times %d\n",times);
+    index=1;
+    % while index<=m
+        % g = b + sum (alphas.*y.*k(:,index));
+        % if KKT(alphas,index,g,y,c)==1
+            % break;
+        % end
+        % index++;
+    % end
+    % if index==m+1
+       % fprintf("all condition met\n"); 
+       % break;
+    % end 
+    %if choosefirst1>=n1+1
+    % fprintf(".........update new r............\n");
+    [r r1]=GetSet(alphas,c);
+    n=length(r);
+    n1=length(r1);
+    choosefirst=1;
+    choosefirst1=1;
+    randindex1=randperm(n);%select variant randomly
+    randindex2=randperm(n1); 
+    % fprintf("no boundary %d and boundary %d \n",n,n1);
+    %end
+    % fprintf('choose first\n');
+    firstfindflag=0;
     while choosefirst<=n
-        index=r(choosefirst);
-        g(index) = b + sum (alphas.*y.*k(:,index));
+        index=r(mod(choosefirst+randindex1(1),n)+1);
+        % index=choosefirst1;
+        g = b + sum (alphas.*y.*k(:,index));
         if KKT(alphas,index,g,y,c)==1%no boundary alpha conform kkt
             fprintf('kkt no boundary first1 %d\n', index);
             a1=index;
+            firstfindflag=1;
+            choosefirst++;
             break;
         end
         choosefirst++;
     end
-    if choosefirst==n+1% find no boundary alpha conform kkt,so begin search boundary
+    if choosefirst==n+1&&firstfindflag==0% find no boundary alpha conform kkt,so begin search boundary
         while choosefirst1<=n1
-            index=r1(choosefirst1);
-            g(index) = b + sum (alphas.*y.*k(:,index));
+            index=r1(mod(choosefirst1+randindex2(1),n1)+1);
+            g = b + sum (alphas.*y.*k(:,index));
             if KKT(alphas,index,g,y,c)==1
-                fprintf('kkt boundary first2 %d\n', index);
+                % fprintf('kkt boundary first2 %d\n', index);
                 a1=index;
+                firstfindflag=1;
+                choosefirst1++;
                 break;
             end
             choosefirst1++;
         end
     end
-    if choosefirst1==n+1 %meet the stop condition
-        fprintf("all condition met\n");
+    if firstfindflag == 0
+        fprintf("all condition meets");
         break;
     end
-        
+    % fprintf('choose second\n');    
     %choose scond alpha 
-    choosesecond1=1;
-    choosesecond2=1;
-    while choosesecond1<=n
-        [flag,tempa2]=chsecond(E,r,a1,k);
-        if flag~=0%no boundary alpha can change greatly
-            a2=tempa2;
-            fprintf('kkt no boundary second1 %d\n', a2);
-            break;
-        end
-        choosesecond1++;
+
+    flag=0;
+    minusE=zeros(1,m);
+    for i=1:m
+        minusE(i)=abs(E(a1)-E(i));
     end
-    if choosesecond1==n+1
-        while choosesecond2<=n1%find no boundary alpha change greatly,so begin search boundary
-            [flag,tempa2]=chsecond(E,r1,a1,k);
-            if flag~=0
-                fprintf('kkt boundary second2 %d\n', a2);
-                a2=tempa2;
-                break;
-            end
-            choosesecond2++;
-        end
-        if choosesecond2==n1+1%no alpha2 meet the condition so rechoose alpha1
-            continue;
-        end
-    end
-    fprintf('updtae alpha begin\n');
-    [flag1,tempalphas,tempb]= updatevariant(a1,a2,alphas,c,b,y,k,E,tol);%update alpha and b
-    if flag1==1      
+        
+    [flag,tempalphas,tempb,tempE]=chsecond(E,a1,k,y,alphas,tol,c,b,minusE);
+    if flag==1%no boundary alpha can change greatly
         alphas=tempalphas;
         b=tempb;
-        fprintf('updtae alpha and b\n');
-        r=find(alphas>0&&alphas<c);%no bundary variant
-        if(size(r,2)==0)%if no 0<alphas<c,go over training example,and find examples against kkt
-            r=[1:1:m];
-        end
-        r1=find(alphas==0||alphas==c);%boundary variant
-        n=length(r);
-        n1=length(r1);
-        choosefirst=1;
-        choosefirst1=1;
+        E=tempE;
     end
-    fprintf('updtae alpha end\n');    
+    count=0;
+    index=1;
+    if flag==1    
+        [r11 r12]=GetSet(alphas,c);
+        n11=length(r11);
+        n12=length(r12);
+        while index<=m
+            g = b + sum (alphas.*y.*k(:,index));
+            if KKT(alphas,index,g,y,c)==1
+                count++;
+            end
+            index++;
+        end
+        if count<10
+            fprintf("training ends\n");
+            break;
+        end
+        % fprintf("no boundary %d and boundary %d and against kkt %d\n",n,n1,count);
+    end  
 end
 end
             

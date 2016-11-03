@@ -1,4 +1,4 @@
-function model = svmtrain(X, Y, C, kernelFunction,tol, max_passes)
+function model = svmtrain(X, Y, C, kernelFunction,tol)
 if ~exist('tol', 'var') || isempty(tol)
     tol = 1e-3;
 end

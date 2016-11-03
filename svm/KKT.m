@@ -1,13 +1,17 @@
 function flag=KKT(alphas,index,g,y,c)
-if alphas(index)>0&&alphas(index)<c&&g(index)*y(index)~=1
+value=g*y(index);
+delta=1e-3;
+upvalue=delta+1;
+lowvalue=1-delta;
+if alphas(index)>0&&alphas(index)<c&&(value>upvalue||value<lowvalue)
     flag=1;
     return;
 end
-if alphas(index)==0&&g(index)*y(index)<1
+if alphas(index)==0&&value<lowvalue
     flag=1;
     return;
 end
-if alphas(index)==c&&g(index)*y(index)>1
+if alphas(index)==c&&value>upvalue
     flag=1;
     return;
 end

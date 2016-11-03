@@ -18,8 +18,6 @@ end
 m = size(X, 1);
 p = zeros(m, 1);
 pred = zeros(m, 1);
-disp(size(p));
-disp(size(pred));
 
 if strcmp(func2str(model.kernelFunction), 'linearKernel')
     % We can use the weights and bias directly if working with the 
@@ -47,8 +45,7 @@ else
         p(i) = prediction + model.b;
     end
 end
-disp(size(p));
-disp(size(pred));
+
 % Convert predictions into 0 / 1
 pred(p >= 0) =  1;
 pred(p <  0) =  0;
