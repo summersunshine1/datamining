@@ -35,7 +35,7 @@ while true
     end 
     %if choosefirst1>=n1+1
     % fprintf(".........update new r............\n");
-    if choosefirst1==n1+1||choosefirst==n+1
+    if choosefirst1==n1+1||choosefirst==n+1%don't need update ererytime
         [r r1]=GetSet(alphas,c);
         n=length(r);
         n1=length(r1);
